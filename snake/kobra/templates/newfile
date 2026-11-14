@@ -1,0 +1,171 @@
+Aapka folder structure dekh kar samajh aa raha hai ki aapne **Django** ka project setup kar liya hai. Aapke main project ka naam `snake` hai aur aapne ek app banayi hai jiska naam `kobra` hai.
+
+Django mein ek browser-based Snake Game banane ke liye humein game ka logic (HTML/JavaScript) likhna hoga aur use Django views ke through serve karna hoga. Yahan step-by-step process hai:
+
+### Step 1: App ko Settings mein add karein
+
+Sabse pehle `snake/settings.py` file open karein aur `INSTALLED_APPS` list mein apni `kobra` app ko add karein.
+
+```python
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'kobra', # Yahan apni app add karein
+]
+
+```
+
+### Step 2: Templates Folder Banayein
+
+Django ko HTML file dikhane ke liye templates folder ki zaroorat hoti hai.
+
+1. Apne `kobra` folder ke andar ek naya folder banayein jiska naam **`templates`** ho.
+2. Us `templates` folder ke andar ek aur folder banayein jiska naam **`kobra`** ho (Django standards ke mutabiq).
+3. Ab iske andar apni HTML file banayein: `index.html`.
+*(Final path: `kobra/templates/kobra/index.html`)*
+
+### Step 3: Game ka Code Likhna (`index.html`)
+
+Ab us `index.html` file ko open karein aur usme HTML5 Canvas aur JavaScript ka ye basic Snake Game code paste karein:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+            flex-direction: column;
+        }
+        canvas {
+            background-color: black;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <h2>Python(Kobra) Snake Game 🐍</h2>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let gridSize = 20;
+        let snake = [{x: 200, y: 200}];
+        let food = {x: 100, y: 100};
+        let dx = 0;
+        let dy = -gridSize;
+        let score = 0;
+
+        function drawGame() {
+            // Screen clear karein
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Food draw karein
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, gridSize, gridSize);
+
+            // Snake move karein
+            let head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+
+            // Khana khaya ya nahi?
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                spawnFood();
+            } else {
+                snake.pop(); // Khana nahi khaya to tail hatao
+            }
+
+            // Snake draw karein
+            ctx.fillStyle = "lime";
+            snake.forEach(segment => ctx.fillRect(segment.x, segment.y, gridSize, gridSize));
+
+            // Game Over logic
+            if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= canvas.height || collision(head)) {
+                alert("Game Over! Score: " + score);
+                snake = [{x: 200, y: 200}];
+                dx = 0; dy = -gridSize;
+                score = 0;
+            }
+        }
+
+        function collision(head) {
+            for(let i = 1; i < snake.length; i++) {
+                if(head.x === snake[i].x && head.y === snake[i].y) return true;
+            }
+            return false;
+        }
+
+        function spawnFood() {
+            food.x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
+            food.y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -gridSize; }
+            if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = gridSize; }
+            if (e.key === "ArrowLeft" && dx === 0) { dx = -gridSize; dy = 0; }
+            if (e.key === "ArrowRight" && dx === 0) { dx = gridSize; dy = 0; }
+        });
+
+        setInterval(drawGame, 100);
+    </script>
+</body>
+</html>
+
+```
+
+### Step 4: View Banayein (`kobra/views.py`)
+
+Is HTML page ko render karne ke liye `kobra/views.py` mein ek function banayein:
+
+```python
+from django.shortcuts import render
+
+def game_view(request):
+    return render(request, 'kobra/index.html')
+
+```
+
+### Step 5: URLs Connect Karein (`snake/urls.py`)
+
+Ab project ki main urls file (`snake/urls.py`) ko open karein aur apne view ka rasta (path) set karein:
+
+```python
+from django.contrib import admin
+from django.urls import path
+from kobra import views  # Apni app ke views import karein
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', views.game_view, name='game'), # Root url par game chalega
+]
+
+```
+
+### Step 6: Server Run Karein
+
+Terminal/Command Prompt open karein, wahan jayen jahan `manage.py` rakhi hai, aur command likhein:
+
+```bash
+python manage.py runserver
+
+```
+
+Browser open karein aur `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)` par jayein. Aapka Snake Game wahan chal raha hoga! Keyboard ki arrow keys se aap snake ko control kar sakte hain.
